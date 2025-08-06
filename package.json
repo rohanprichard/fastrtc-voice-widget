@@ -24,8 +24,16 @@
     "widget",
     "component"
   ],
-  "author": "Your Name",
+  "author": "Rohan Richard <rohanprichard@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rohanprichard/fastrtc-voice-widget.git"
+  },
+  "homepage": "https://github.com/rohanprichard/fastrtc-voice-widget#readme",
+  "bugs": {
+    "url": "https://github.com/rohanprichard/fastrtc-voice-widget/issues"
+  },
   "peerDependencies": {
     "react": ">=16.8.0",
     "react-dom": ">=16.8.0",
@@ -46,9 +54,5 @@
     "rollup-plugin-dts": "^6.0.2",
     "rollup-plugin-peer-deps-external": "^2.2.4",
     "typescript": "^5.2.2"
-  },
-  "repository": {
-    "type": "git",
-    "url": "your-repo-url"
   }
 }

@@ -10,7 +10,7 @@ function ExampleApp() {
         onConnectionChange={(connected) => {
           console.log('Voice chat connected:', connected);
         }}
-        showDeviceSelection={true}
+        showDeviceSelection={false}
       />
     </div>
   );

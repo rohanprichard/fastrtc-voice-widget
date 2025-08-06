@@ -73,15 +73,6 @@ function CustomVoiceChat() {
 | `backgroundComponent` | `React.ReactNode` | `undefined` | Custom background component |
 | `hideBackground` | `boolean` | `false` | Hide the default background |
 
-## CSS Requirements
-
-This component uses Tailwind CSS classes. Make sure you have Tailwind CSS configured in your project with the following classes available:
-
-- Layout: `flex`, `items-center`, `justify-center`, `h-screen`, `relative`, `absolute`, etc.
-- Colors: `bg-background`, `text-foreground`, `bg-card`, `border-border`, etc.
-- Spacing: `p-4`, `m-4`, `space-y-3`, etc.
-
-If you're using a custom design system, you may need to override these classes.
 
 ## Development
 
@@ -89,6 +80,25 @@ If you're using a custom design system, you may need to override these classes.
 2. Install dependencies: `npm install`
 3. Build the package: `npm run build`
 4. The built files will be in the `dist` directory
+
+## API Requirements
+
+This component assumes that you have FastRTC setup and running as an API mounted on a FastAPI app.
+
+It also requires a route that serves the TURN server credentials from some service (I use Twilio). Read the FastRTC docs for more on this. [https://fastrtc.org/reference/credentials/].
+
+(I would also recommend adding some auth to avoid any)
+
+```python
+@app.get("/turn-credentials")
+async def get_turn_credentials():
+    try:
+        credentials = get_twilio_turn_credentials()
+        return credentials
+    except Exception as e:
+        logger.error(f"Error with TURN creds: {e}")
+```
+
 
 ## License
 
