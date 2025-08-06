@@ -1,0 +1,7 @@
+src/
+*.log
+.DS_Store
+.env*
+coverage/
+rollup.config.js
+tsconfig.json
