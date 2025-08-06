@@ -29,7 +29,6 @@ function App() {
     <div className="h-screen">
       <VoiceWidget 
         apiUrl="https://your-api-url.com"
-        authToken="your-auth-token"
         onConnectionChange={(connected) => {
           console.log('Voice chat connected:', connected);
         }}
@@ -51,8 +50,6 @@ function CustomVoiceChat() {
   return (
     <VoiceWidget
       apiUrl="https://your-api-url.com"
-      authToken="your-auth-token"
-      webrtcIdPrefix="session"
       showDeviceSelection={true}
       onConnectionChange={setIsConnected}
       className="custom-voice-widget"
@@ -62,37 +59,6 @@ function CustomVoiceChat() {
 }
 ```
 
-### Using the Hook Directly
-
-```tsx
-import React from 'react';
-import { useWebRTC, VoiceChatButton } from 'fastrtc-voice-widget';
-
-function CustomImplementation() {
-  const {
-    isConnecting,
-    isConnected,
-    handleToggleVoiceChat,
-    audioOutputRef
-  } = useWebRTC({
-    apiUrl: 'https://your-api-url.com',
-    authToken: 'your-token',
-    onConnectionChange: (connected) => console.log('Connected:', connected)
-  });
-
-  return (
-    <div>
-      <VoiceChatButton
-        onClick={handleToggleVoiceChat}
-        isConnecting={isConnecting}
-        isConnected={isConnected}
-        action={isConnected ? "stop" : "start"}
-      />
-      <audio ref={audioOutputRef} hidden />
-    </div>
-  );
-}
-```
 
 ## Props
 
