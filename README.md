@@ -45,7 +45,7 @@ function App() {
 'use client';
 
 import React, { useState } from 'react';
-import { VoiceWidget, useWebRTC } from 'fastrtc-voice-widget';
+import { VoiceWidget, VoiceChatButton, useWebRTC } from 'fastrtc-voice-widget';
 
 function CustomVoiceChat() {
   const [isConnected, setIsConnected] = useState(false);
@@ -56,7 +56,7 @@ function CustomVoiceChat() {
       showDeviceSelection={true}
       onConnectionChange={setIsConnected}
       className="custom-voice-widget"
-      backgroundComponent={<div className="custom-background" />}
+      menuPosition="top-left"
     />
   );
 }
@@ -69,12 +69,20 @@ function CustomVoiceChat() {
 
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `apiUrl` | `string` | `required`| WebRTC backend API URL |
+| `apiUrl` | `string` | `required` | WebRTC backend API URL |
 | `onConnectionChange` | `(connected: boolean) => void` | `undefined` | Callback when connection state changes |
 | `showDeviceSelection` | `boolean` | `true` | Show device selection controls |
 | `className` | `string` | `""` | Custom CSS class for container |
-| `backgroundComponent` | `React.ReactNode` | `undefined` | Custom background component |
-| `hideBackground` | `boolean` | `false` | Hide the default background |
+| `menuPosition` | `'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right'` | `'bottom-right'` | Position of the device menu dropdown |
+
+### VoiceChatButton Props
+
+| Prop | Type | Default | Description |
+|------|------|---------|-------------|
+| `onClick` | `() => void` | `required` | Function called when button is clicked |
+| `isConnecting` | `boolean` | `required` | Whether the connection is in progress |
+| `isConnected` | `boolean` | `required` | Whether the voice chat is connected |
+| `action` | `'start' \| 'stop'` | `required` | The action the button should perform |
 
 
 ## API Requirements
