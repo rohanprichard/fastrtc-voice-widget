@@ -43,7 +43,8 @@ async function setupWebRTC(
     audioOutputElement: HTMLAudioElement | null, 
     setIsConnected: React.Dispatch<React.SetStateAction<boolean>>,
     apiUrl: string,
-    selectedInputDeviceId?: string
+    selectedInputDeviceId?: string,
+    currentStreamRef?: React.MutableRefObject<MediaStream | null>
 ) {
     if (!audioOutputElement) {
         console.error("Audio output element not found, but it's intentionally hidden.");
@@ -66,6 +67,11 @@ async function setupWebRTC(
         
         const stream = await navigator.mediaDevices.getUserMedia(constraints);
         console.log("Microphone access granted.");
+
+        // Store the stream reference for later device switching
+        if (currentStreamRef) {
+            currentStreamRef.current = stream;
+        }
 
         stream.getTracks().forEach(track => {
             console.log(`Adding track: ${track.kind}`);
@@ -157,7 +163,11 @@ async function setupWebRTC(
     }
 }
 
-async function shutdownWebRTC(peerConnection: RTCPeerConnection, setIsConnected: React.Dispatch<React.SetStateAction<boolean>>) {
+async function shutdownWebRTC(
+    peerConnection: RTCPeerConnection, 
+    setIsConnected: React.Dispatch<React.SetStateAction<boolean>>,
+    currentStreamRef?: React.MutableRefObject<MediaStream | null>
+) {
     console.log("Shutting down WebRTC connection...");
     
     const senders = peerConnection.getSenders();
@@ -168,6 +178,14 @@ async function shutdownWebRTC(peerConnection: RTCPeerConnection, setIsConnected:
         }
     });
 
+    // Clean up current stream reference
+    if (currentStreamRef?.current) {
+        currentStreamRef.current.getTracks().forEach(track => {
+            track.stop();
+        });
+        currentStreamRef.current = null;
+    }
+
     peerConnection.close();
     console.log("WebRTC connection closed and microphone access released.");
 
@@ -177,6 +195,7 @@ async function shutdownWebRTC(peerConnection: RTCPeerConnection, setIsConnected:
 export function useWebRTC(config: WebRTCConfig) {
     const audioOutputRef = useRef<HTMLAudioElement>(null);
     const peerConnectionRef = useRef<RTCPeerConnection | null>(null);
+    const currentStreamRef = useRef<MediaStream | null>(null);
     const [isConnecting, setIsConnecting] = useState(false);
     const [isConnected, setIsConnected] = useState(false);
     const [inputDevices, setInputDevices] = useState<AudioDevice[]>([]);
@@ -248,6 +267,59 @@ export function useWebRTC(config: WebRTCConfig) {
         };
     }, [apiUrl, config.authToken]);
 
+    const handleInputDeviceChange = useCallback(async (deviceId: string) => {
+        setSelectedInputDeviceId(deviceId);
+        
+        // If we're connected, we need to replace the input track
+        if (isConnected && peerConnectionRef.current && currentStreamRef.current) {
+            try {
+                console.log(`Switching input device to: ${deviceId}`);
+                
+                // Get new stream with selected device
+                const constraints: MediaStreamConstraints = {
+                    audio: deviceId ? { 
+                        deviceId: { exact: deviceId }, 
+                        noiseSuppression: true, 
+                        echoCancellation: true, 
+                        autoGainControl: true 
+                    } : {
+                        noiseSuppression: true,
+                        echoCancellation: true,
+                        autoGainControl: true
+                    },
+                };
+                
+                const newStream = await navigator.mediaDevices.getUserMedia(constraints);
+                console.log("New microphone stream obtained.");
+                
+                // Stop old tracks
+                currentStreamRef.current.getTracks().forEach(track => {
+                    track.stop();
+                });
+                
+                // Replace tracks in peer connection
+                const sender = peerConnectionRef.current.getSenders().find(s => 
+                    s.track && s.track.kind === 'audio'
+                );
+                
+                if (sender && newStream.getAudioTracks().length > 0) {
+                    await sender.replaceTrack(newStream.getAudioTracks()[0]);
+                    console.log("Audio track replaced successfully.");
+                } else {
+                    console.error("Could not find audio sender or new audio track.");
+                }
+                
+                // Update stream reference
+                currentStreamRef.current = newStream;
+                
+            } catch (error) {
+                console.error('Error changing input device during connection:', error);
+                // Revert the device selection if it failed
+                setSelectedInputDeviceId(selectedInputDeviceId);
+            }
+        }
+    }, [isConnected, selectedInputDeviceId]);
+
     const handleOutputDeviceChange = useCallback(async (deviceId: string) => {
         setSelectedOutputDeviceId(deviceId);
         if (audioOutputRef.current && audioOutputRef.current.setSinkId) {
@@ -263,7 +335,7 @@ export function useWebRTC(config: WebRTCConfig) {
     const handleToggleVoiceChat = useCallback(async () => {
         if (isConnected) {
             if (peerConnectionRef.current) {
-                await shutdownWebRTC(peerConnectionRef.current, setIsConnected);
+                await shutdownWebRTC(peerConnectionRef.current, setIsConnected, currentStreamRef);
             }
         } else {
             if (isConnecting) {
@@ -297,6 +369,7 @@ export function useWebRTC(config: WebRTCConfig) {
                     setIsConnected,
                     apiUrl,
                     selectedInputDeviceId,
+                    currentStreamRef
                 );
             } catch (error) {
                 console.error("Error during setupWebRTC in handleToggleVoiceChat:", error);
@@ -314,7 +387,7 @@ export function useWebRTC(config: WebRTCConfig) {
         outputDevices,
         selectedInputDeviceId,
         selectedOutputDeviceId,
-        setSelectedInputDeviceId,
+        handleInputDeviceChange,
         handleOutputDeviceChange,
         handleToggleVoiceChat
     };

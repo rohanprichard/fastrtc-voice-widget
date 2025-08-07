@@ -14,10 +14,6 @@ export interface VoiceWidgetProps {
   showDeviceSelection?: boolean;
   /** Custom class name for the container */
   className?: string;
-  /** Custom background component (replaces default background) */
-  backgroundComponent?: React.ReactNode;
-  /** Hide the background entirely */
-  hideBackground?: boolean;
   /** Position of the device menu dropdown */
   menuPosition?: DropdownPosition;
 }
@@ -114,8 +110,6 @@ export function VoiceWidget({
   onConnectionChange,
   showDeviceSelection = true,
   className = "",
-  backgroundComponent,
-  hideBackground = false,
   menuPosition = 'bottom-right'
 }: VoiceWidgetProps) {
   const {
@@ -126,7 +120,7 @@ export function VoiceWidget({
     outputDevices,
     selectedInputDeviceId,
     selectedOutputDeviceId,
-    setSelectedInputDeviceId,
+    handleInputDeviceChange,
     handleOutputDeviceChange,
     handleToggleVoiceChat
   } = useWebRTC({
@@ -216,7 +210,7 @@ export function VoiceWidget({
               outputDevices={outputDevices}
               selectedInputDeviceId={selectedInputDeviceId}
               selectedOutputDeviceId={selectedOutputDeviceId}
-              onInputDeviceChange={setSelectedInputDeviceId}
+              onInputDeviceChange={handleInputDeviceChange}
               onOutputDeviceChange={handleOutputDeviceChange}
               disabled={isConnecting}
               position={menuPosition}
