@@ -97,7 +97,7 @@ async function setupWebRTC(
         console.log("Local description (offer) set.");
 
         const randomId = Math.random().toString(36).substring(7);
-        const webrtc_id = "amlTest-" + randomId;
+        const webrtc_id = randomId;
         console.log("Generated WebRTC ID:", webrtc_id);
 
         peerConnection.onicecandidate = ({ candidate }) => {
