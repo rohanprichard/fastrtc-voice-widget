@@ -1,6 +1,8 @@
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { VoiceChatButton } from './VoiceChatButton';
+import { Mic, MicOff } from 'lucide-react';
+import { DeviceMenu } from './ui/device-menu';
+import { DropdownPosition } from './ui/dropdown-menu';
 import { useWebRTC } from '../hooks/useWebRTC';
 
 export interface VoiceWidgetProps {
@@ -16,7 +18,96 @@ export interface VoiceWidgetProps {
   backgroundComponent?: React.ReactNode;
   /** Hide the background entirely */
   hideBackground?: boolean;
+  /** Position of the device menu dropdown */
+  menuPosition?: DropdownPosition;
 }
+
+// Isolated widget styles - won't be affected by parent app CSS
+const widgetStyles = {
+  container: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '12px',
+    background: '#ffffff',
+    border: '1px solid #e5e7eb',
+    borderRadius: '24px',
+    padding: '8px 16px 8px 8px',
+    boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+    fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+    boxSizing: 'border-box' as const,
+    position: 'relative' as const,
+    transition: 'all 0.2s ease',
+    maxWidth: '280px',
+  },
+  containerHover: {
+    boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+  },
+  micButton: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '40px',
+    height: '40px',
+    borderRadius: '50%',
+    background: '#ffffff',
+    border: '2px solid #e5e7eb',
+    cursor: 'pointer',
+    transition: 'all 0.2s ease',
+    outline: 'none',
+    flexShrink: 0,
+  },
+  micButtonActive: {
+    background: '#ef4444',
+    borderColor: '#dc2626',
+  },
+  micButtonConnecting: {
+    background: '#f59e0b',
+    borderColor: '#d97706',
+  },
+  micButtonHover: {
+    transform: 'scale(1.05)',
+  },
+  micButtonDisabled: {
+    opacity: 0.6,
+    cursor: 'not-allowed',
+    transform: 'none',
+  },
+  textContainer: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column' as const,
+    gap: '2px',
+    minWidth: 0,
+  },
+  primaryText: {
+    fontSize: '14px',
+    fontWeight: '500',
+    color: '#111827',
+    margin: 0,
+    lineHeight: '1.2',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  secondaryText: {
+    fontSize: '12px',
+    color: '#6b7280',
+    margin: 0,
+    lineHeight: '1.2',
+    whiteSpace: 'nowrap' as const,
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+  },
+  menuContainer: {
+    flexShrink: 0,
+  },
+  audioElement: {
+    position: 'absolute' as const,
+    visibility: 'hidden' as const,
+    width: '1px',
+    height: '1px',
+  }
+};
 
 export function VoiceWidget({
   apiUrl,
@@ -24,7 +115,8 @@ export function VoiceWidget({
   showDeviceSelection = true,
   className = "",
   backgroundComponent,
-  hideBackground = false
+  hideBackground = false,
+  menuPosition = 'bottom-right'
 }: VoiceWidgetProps) {
   const {
     audioOutputRef,
@@ -42,87 +134,104 @@ export function VoiceWidget({
     onConnectionChange
   });
 
-  return (
-    <div className={`flex flex-col items-center justify-center h-screen bg-background text-foreground relative ${className}`}>
-      {showDeviceSelection && (
-        <div className="absolute top-4 left-4 z-20 space-y-3">
-          <div className="bg-card/80 backdrop-blur-sm border border-border rounded-lg p-4 shadow-lg">
-            <div className="space-y-3">
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Microphone
-                </label>
-                <select
-                  value={selectedInputDeviceId}
-                  onChange={(e) => setSelectedInputDeviceId(e.target.value)}
-                  className="w-full min-w-[200px] px-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                  disabled={isConnected}
-                >
-                  {inputDevices.map((device) => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {device.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
+  const [isHovered, setIsHovered] = React.useState(false);
+  const [isMicHovered, setIsMicHovered] = React.useState(false);
 
-              <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1">
-                  Speaker
-                </label>
-                <select
-                  value={selectedOutputDeviceId}
-                  onChange={(e) => handleOutputDeviceChange(e.target.value)}
-                  className="w-full min-w-[200px] px-3 py-1.5 text-sm bg-background border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent"
-                >
-                  {outputDevices.map((device) => (
-                    <option key={device.deviceId} value={device.deviceId}>
-                      {device.label}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
+  const getStatusText = () => {
+    if (isConnecting) return "Connecting...";
+    if (isConnected) return "Connected";
+    return "Voice Chat";
+  };
+
+  const getSecondaryText = () => {
+    if (isConnecting) return "Please wait";
+    if (isConnected) return "Click to disconnect";
+    return "Click to start";
+  };
+
+  const getMicIcon = () => {
+    if (isConnected) return <MicOff size={20} color="#ffffff" />;
+    return <Mic size={20} color={isConnecting ? "#ffffff" : "#6b7280"} />;
+  };
+
+  const getMicButtonStyle = () => {
+    let style = { ...widgetStyles.micButton };
+    
+    if (isConnected) {
+      style = { ...style, ...widgetStyles.micButtonActive };
+    } else if (isConnecting) {
+      style = { ...style, ...widgetStyles.micButtonConnecting };
+    }
+    
+    if (isMicHovered && !isConnecting) {
+      style = { ...style, ...widgetStyles.micButtonHover };
+    }
+    
+    return style;
+  };
+
+  const getContainerStyle = () => {
+    let style = { ...widgetStyles.container };
+    if (isHovered) {
+      style = { ...style, ...widgetStyles.containerHover };
+    }
+    return style;
+  };
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        transition={{ duration: 0.2 }}
+        style={getContainerStyle()}
+        className={className}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <button
+          onClick={handleToggleVoiceChat}
+          style={getMicButtonStyle()}
+          onMouseEnter={() => setIsMicHovered(true)}
+          onMouseLeave={() => setIsMicHovered(false)}
+          aria-label={isConnected ? "Stop voice chat" : "Start voice chat"}
+        >
+          {getMicIcon()}
+        </button>
+
+        <div style={widgetStyles.textContainer}>
+          <div style={widgetStyles.primaryText}>
+            {getStatusText()}
+          </div>
+          <div style={widgetStyles.secondaryText}>
+            {getSecondaryText()}
           </div>
         </div>
-      )}
 
-      {!hideBackground && (
-        <div className="absolute inset-0 z-0">
-          {backgroundComponent || (
-            <div className="w-full h-full bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800" />
-          )}
-        </div>
-      )}
-      
-      <div className="relative z-10">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key="voice-content-wrapper"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.3 }}
-            className="flex flex-col items-center p-8 rounded-lg bg-transparent"
-          >
-            <VoiceChatButton
-              onClick={handleToggleVoiceChat}
-              isConnecting={isConnecting}
-              isConnected={isConnected}
-              action={isConnected ? "stop" : "start"}
+        {showDeviceSelection && (
+          <div style={widgetStyles.menuContainer}>
+            <DeviceMenu
+              inputDevices={inputDevices}
+              outputDevices={outputDevices}
+              selectedInputDeviceId={selectedInputDeviceId}
+              selectedOutputDeviceId={selectedOutputDeviceId}
+              onInputDeviceChange={setSelectedInputDeviceId}
+              onOutputDeviceChange={handleOutputDeviceChange}
+              disabled={isConnecting}
+              position={menuPosition}
             />
-            <audio 
-              ref={audioOutputRef} 
-              id="fastrtc-voice-widget-audio" 
-              controls 
-              hidden 
-              className="w-full max-w-md mt-4"
-            >
-              Your browser does not support the audio element.
-            </audio>
-          </motion.div>
-        </AnimatePresence>
-      </div>
-    </div>
+          </div>
+        )}
+
+        <audio 
+          ref={audioOutputRef} 
+          id="fastrtc-voice-widget-audio" 
+          style={widgetStyles.audioElement}
+        >
+          Your browser does not support the audio element.
+        </audio>
+      </motion.div>
+    </AnimatePresence>
   );
 }

@@ -31,14 +31,17 @@ export default [
       typescript({
         tsconfig: './tsconfig.json',
         exclude: ['**/*.test.tsx', '**/*.test.ts', '**/*.stories.ts'],
+        declaration: true,
+        declarationDir: 'dist',
+        outDir: 'dist',
       }),
     ],
-    external: ['react', 'react-dom'],
+    external: ['react', 'react-dom', 'framer-motion', 'lucide-react', 'class-variance-authority', 'clsx', 'tailwind-merge', '@radix-ui/react-slot'],
   },
   {
-    input: 'dist/index.d.ts',
+    input: 'src/index.ts',
     output: [{ file: 'dist/index.d.ts', format: 'esm' }],
     plugins: [dts()],
-    external: [/\.css$/],
+    external: ['react', 'react-dom', 'framer-motion', 'lucide-react', 'class-variance-authority', 'clsx', 'tailwind-merge', '@radix-ui/react-slot'],
   },
 ];

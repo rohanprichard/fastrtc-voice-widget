@@ -16,11 +16,90 @@ This package requires the following peer dependencies:
 npm install react react-dom framer-motion lucide-react class-variance-authority clsx tailwind-merge @radix-ui/react-slot
 ```
 
+## Styling Isolation
+
+The FastRTC Voice Widget is designed to prevent CSS conflicts with your application. It uses specific Tailwind CSS classes instead of semantic theme variables, ensuring the widget maintains its appearance regardless of your app's styling.
+
+### ✅ No Conflicts
+
+Your app can safely use semantic classes like `bg-primary`, `text-foreground`, etc., while the widget uses its own isolated color scheme:
+
+```tsx
+function App() {
+  return (
+    <div>
+      {/* Your app's theme */}
+      <header className="bg-primary text-primary-foreground p-4">
+        <h1>My App</h1>
+      </header>
+      
+      {/* Widget with isolated styling */}
+      <VoiceWidget apiUrl="your-api-url" />
+    </div>
+  );
+}
+```
+
+The widget uses specific classes like:
+- `bg-blue-600` instead of `bg-primary`
+- `text-gray-900` instead of `text-foreground`
+- `border-gray-200` instead of `border-border`
+
+This ensures zero conflicts with your application's design system.
+
+## Framework Compatibility
+
+### Next.js App Router
+
+The widget is fully compatible with Next.js App Router. Since it uses React hooks and browser APIs, you must use it in client components:
+
+```tsx
+'use client';
+
+import { VoiceWidget } from 'fastrtc-voice-widget';
+
+export default function VoicePage() {
+  return (
+    <div>
+      <h1>Voice Chat Page</h1>
+      <VoiceWidget apiUrl="your-api-url" />
+    </div>
+  );
+}
+```
+
+### Next.js Pages Router
+
+Works seamlessly with Pages Router without any additional configuration:
+
+```tsx
+// pages/voice.tsx
+import { VoiceWidget } from 'fastrtc-voice-widget';
+
+export default function VoicePage() {
+  return <VoiceWidget apiUrl="your-api-url" />;
+}
+```
+
+### Create React App & Vite
+
+Works out of the box with any standard React setup:
+
+```tsx
+import { VoiceWidget } from 'fastrtc-voice-widget';
+
+function App() {
+  return <VoiceWidget apiUrl="your-api-url" />;
+}
+```
+
 ## Usage
 
 ### Basic Usage
 
 ```tsx
+'use client'; // Required for Next.js App Router
+
 import React from 'react';
 import { VoiceWidget } from 'fastrtc-voice-widget';
 
@@ -38,9 +117,13 @@ function App() {
 }
 ```
 
+> **Note**: This widget uses React hooks and browser APIs, so it must be used in a client component. Add `'use client';` directive when using with Next.js App Router.
+
 ### Advanced Usage
 
 ```tsx
+'use client';
+
 import React, { useState } from 'react';
 import { VoiceWidget, useWebRTC } from 'fastrtc-voice-widget';
 
