@@ -16,89 +16,12 @@ This package requires the following peer dependencies:
 npm install react react-dom framer-motion lucide-react class-variance-authority clsx tailwind-merge @radix-ui/react-slot
 ```
 
-## Styling Isolation
-
-The FastRTC Voice Widget is designed to prevent CSS conflicts with your application. It uses specific Tailwind CSS classes instead of semantic theme variables, ensuring the widget maintains its appearance regardless of your app's styling.
-
-### ✅ No Conflicts
-
-Your app can safely use semantic classes like `bg-primary`, `text-foreground`, etc., while the widget uses its own isolated color scheme:
-
-```tsx
-function App() {
-  return (
-    <div>
-      {/* Your app's theme */}
-      <header className="bg-primary text-primary-foreground p-4">
-        <h1>My App</h1>
-      </header>
-      
-      {/* Widget with isolated styling */}
-      <VoiceWidget apiUrl="your-api-url" />
-    </div>
-  );
-}
-```
-
-The widget uses specific classes like:
-- `bg-blue-600` instead of `bg-primary`
-- `text-gray-900` instead of `text-foreground`
-- `border-gray-200` instead of `border-border`
-
-This ensures zero conflicts with your application's design system.
-
-## Framework Compatibility
-
-### Next.js App Router
-
-The widget is fully compatible with Next.js App Router. Since it uses React hooks and browser APIs, you must use it in client components:
-
-```tsx
-'use client';
-
-import { VoiceWidget } from 'fastrtc-voice-widget';
-
-export default function VoicePage() {
-  return (
-    <div>
-      <h1>Voice Chat Page</h1>
-      <VoiceWidget apiUrl="your-api-url" />
-    </div>
-  );
-}
-```
-
-### Next.js Pages Router
-
-Works seamlessly with Pages Router without any additional configuration:
-
-```tsx
-// pages/voice.tsx
-import { VoiceWidget } from 'fastrtc-voice-widget';
-
-export default function VoicePage() {
-  return <VoiceWidget apiUrl="your-api-url" />;
-}
-```
-
-### Create React App & Vite
-
-Works out of the box with any standard React setup:
-
-```tsx
-import { VoiceWidget } from 'fastrtc-voice-widget';
-
-function App() {
-  return <VoiceWidget apiUrl="your-api-url" />;
-}
-```
-
 ## Usage
 
 ### Basic Usage
 
 ```tsx
-'use client'; // Required for Next.js App Router
+'use client';
 
 import React from 'react';
 import { VoiceWidget } from 'fastrtc-voice-widget';
@@ -108,9 +31,6 @@ function App() {
     <div className="h-screen">
       <VoiceWidget 
         apiUrl="https://your-api-url.com"
-        onConnectionChange={(connected) => {
-          console.log('Voice chat connected:', connected);
-        }}
       />
     </div>
   );
@@ -157,29 +77,24 @@ function CustomVoiceChat() {
 | `hideBackground` | `boolean` | `false` | Hide the default background |
 
 
-## Development
-
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Build the package: `npm run build`
-4. The built files will be in the `dist` directory
-
 ## API Requirements
 
 This component assumes that you have FastRTC setup and running as an API mounted on a FastAPI app.
+**Example coming soon**
 
-It also requires a route that serves the TURN server credentials from some service (I use Twilio). Read the FastRTC docs for more on this. [https://fastrtc.org/reference/credentials/].
+It also requires a route, shown below, that serves a TURN server's details from some service (I use Twilio). Read the FastRTC docs for more on this as well as why you need a TURN server. [https://fastrtc.org/reference/credentials/].
 
-(I would also recommend adding some auth to avoid any)
 
 ```python
+from fastrtc.credentials import get_twilio_turn_credentials
+
 @app.get("/turn-credentials")
 async def get_turn_credentials():
     try:
         credentials = get_twilio_turn_credentials()
         return credentials
     except Exception as e:
-        logger.error(f"Error with TURN creds: {e}")
+        logger.error(f"some error: {e}")
 ```
 
 
