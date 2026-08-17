@@ -1,110 +1,63 @@
 # FastRTC Voice Widget
 
-A React component library for WebRTC voice chat functionality.
+A React component library for adding a WebRTC voice-chat control to an application backed by FastRTC.
 
-## Installation
+## Install
 
 ```bash
 npm install fastrtc-voice-widget
 ```
 
-### Peer Dependencies
+The package expects React, React DOM, Framer Motion, Lucide, Radix Slot, and the listed styling utilities as peer dependencies.
 
-This package requires the following peer dependencies:
-
-```bash
-npm install react react-dom framer-motion lucide-react class-variance-authority clsx tailwind-merge @radix-ui/react-slot
-```
-
-## Usage
-
-### Basic Usage
+## Quickstart
 
 ```tsx
-'use client';
+"use client";
 
-import React from 'react';
-import { VoiceWidget } from 'fastrtc-voice-widget';
+import { VoiceWidget } from "fastrtc-voice-widget";
 
-function App() {
-  return (
-    <div className="h-screen">
-      <VoiceWidget 
-        apiUrl="https://your-api-url.com"
-      />
-    </div>
-  );
+export function SupportVoice() {
+  return <VoiceWidget apiUrl="https://your-api.example.com" />;
 }
 ```
 
-> **Note**: This widget uses React hooks and browser APIs, so it must be used in a client component. Add `'use client';` directive when using with Next.js App Router.
+Use it from a client component in Next.js because it depends on browser media APIs.
 
-### Advanced Usage
+## Backend requirements
 
-```tsx
-'use client';
-
-import React, { useState } from 'react';
-import { VoiceWidget, VoiceChatButton, useWebRTC } from 'fastrtc-voice-widget';
-
-function CustomVoiceChat() {
-  const [isConnected, setIsConnected] = useState(false);
-
-  return (
-    <VoiceWidget
-      apiUrl="https://your-api-url.com"
-      showDeviceSelection={true}
-      onConnectionChange={setIsConnected}
-      className="custom-voice-widget"
-      menuPosition="top-left"
-    />
-  );
-}
-```
-
-
-## Props
-
-### VoiceWidget Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `apiUrl` | `string` | `required` | WebRTC backend API URL |
-| `onConnectionChange` | `(connected: boolean) => void` | `undefined` | Callback when connection state changes |
-| `showDeviceSelection` | `boolean` | `true` | Show device selection controls |
-| `className` | `string` | `""` | Custom CSS class for container |
-| `menuPosition` | `'top-left' \| 'top-right' \| 'bottom-left' \| 'bottom-right'` | `'bottom-right'` | Position of the device menu dropdown |
-
-### VoiceChatButton Props
-
-| Prop | Type | Default | Description |
-|------|------|---------|-------------|
-| `onClick` | `() => void` | `required` | Function called when button is clicked |
-| `isConnecting` | `boolean` | `required` | Whether the connection is in progress |
-| `isConnected` | `boolean` | `required` | Whether the voice chat is connected |
-| `action` | `'start' \| 'stop'` | `required` | The action the button should perform |
-
-
-## API Requirements
-
-This component assumes that you have FastRTC setup and running as an API mounted on a FastAPI app.
-**Example coming soon**
-
-It also requires a route, shown below, that serves a TURN server's details from some service (I use Twilio). Read the FastRTC docs for more on this as well as why you need a TURN server. [https://fastrtc.org/reference/credentials/].
-
+The `apiUrl` must point at a compatible FastRTC/FastAPI voice backend. The host application must also provide a `GET /turn-credentials` endpoint that returns short-lived TURN credentials; see the [FastRTC credentials reference](https://fastrtc.org/reference/credentials/).
 
 ```python
 from fastrtc.credentials import get_twilio_turn_credentials
 
 @app.get("/turn-credentials")
-async def get_turn_credentials():
-    try:
-        credentials = get_twilio_turn_credentials()
-        return credentials
-    except Exception as e:
-        logger.error(f"some error: {e}")
+async def turn_credentials():
+    return get_twilio_turn_credentials()
 ```
 
+Do not ship TURN provider secrets to the browser.
+
+## Main props
+
+| Prop | Purpose |
+| --- | --- |
+| `apiUrl` | Required URL of the FastRTC backend. |
+| `onConnectionChange` | Receives voice connection state changes. |
+| `showDeviceSelection` | Shows microphone/device controls; defaults to `true`. |
+| `className` | Styles the widget container. |
+| `menuPosition` | Positions the device-control menu. |
+
+## Development
+
+```bash
+npm install
+npm run build
+```
+
+## Status
+
+The package is a reusable integration component. It does not include a hosted backend or TURN provider; consumers supply both.
 
 ## License
 
